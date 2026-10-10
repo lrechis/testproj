@@ -73,3 +73,18 @@ Set `GOOGLE_MAPS_API_KEY` and `PORT` in the host's environment.
 
 Forecasts are not official warnings. For watches and warnings use the
 [National Weather Service](https://www.weather.gov/okx/).
+
+## Deploy to Cloud Run (one command)
+
+```bash
+export GOOGLE_CLOUD_PROJECT=your-project-id
+export GOOGLE_MAPS_API_KEY=your-key
+./deploy.sh
+```
+
+`deploy.sh` enables the Run, Cloud Build, and Artifact Registry APIs, builds
+the container from the `Dockerfile`, deploys it with public access, and prints
+the service URL. Set `MIN_INSTANCES=1` to avoid cold starts (a few dollars a
+month); the default of 0 is free-tier friendly. If
+`GOOGLE_CLOUD_CREDENTIALS_JSON` holds a service-account key, the script logs in
+with it first.
