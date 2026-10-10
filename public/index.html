@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Current conditions and forecast for Fire Island and Brooklyn, NY, powered by Google DeepMind WeatherNext 3.">
+<title>Fire Island & Brooklyn Weather</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest">
+<style>
+:root{
+  --bg:#0b1220;--card:#121c31;--card2:#182544;--line:#243556;
+  --text:#eaf0ff;--muted:#8fa0c4;--accent:#5eb1ff;--rain:#4fc3f7;--wind:#b6c8ea;--warn:#ffb454;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+header{
+  position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;
+  padding:12px 16px;background:rgba(11,18,32,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+}
+header h1{font-size:17px;margin:0;flex:1;font-weight:600;letter-spacing:.2px}
+header h1 small{display:block;font-size:12px;color:var(--muted);font-weight:400}
+button#refresh{
+  appearance:none;border:1px solid var(--line);background:var(--card2);color:var(--text);
+  font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border-radius:999px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;min-height:40px;
+}
+button#refresh:active{transform:scale(.97)}
+button#refresh[disabled]{opacity:.6;cursor:default}
+button#refresh svg{width:16px;height:16px}
+button#refresh.spin svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+main{max-width:1100px;margin:0 auto;padding:12px 16px 32px;display:grid;gap:16px}
+@media (min-width:820px){main{grid-template-columns:1fr 1fr;padding-top:20px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.card .top{padding:16px 16px 8px}
+.loc{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.loc h2{margin:0;font-size:20px}
+.loc .sub{color:var(--muted);font-size:13px}
+.now{display:flex;align-items:center;gap:14px;margin-top:8px}
+.now .icon{font-size:52px;line-height:1;width:60px;text-align:center}
+.now .temp{font-size:56px;font-weight:300;line-height:1;letter-spacing:-2px}
+.now .temp sup{font-size:22px;font-weight:400;letter-spacing:0;vertical-align:top;top:.35em;position:relative}
+.now .desc{font-size:15px;margin-top:4px}
+.now .desc .hl{color:var(--muted);font-size:13px;margin-top:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 16px 16px}
+.stat{background:var(--card2);border-radius:12px;padding:10px 12px}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.stat .v{font-size:18px;font-weight:600;margin-top:2px}
+.stat .v small{font-size:12px;font-weight:400;color:var(--muted)}
+.stat.rain .v{color:var(--rain)}
+.stat.wind .v{color:var(--wind)}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:0;padding:12px 16px 6px;border-top:1px solid var(--line)}
+.hours{display:flex;gap:4px;overflow-x:auto;padding:0 12px 12px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.hour{flex:0 0 64px;text-align:center;padding:8px 4px;border-radius:12px;scroll-snap-align:start}
+.hour:first-child{background:var(--card2)}
+.hour .t{font-size:12px;color:var(--muted)}
+.hour .i{font-size:24px;line-height:1.2;margin:4px 0}
+.hour .tp{font-size:16px;font-weight:600}
+.hour .r{font-size:12px;color:var(--rain);min-height:16px}
+.hour .w{font-size:11px;color:var(--wind);white-space:nowrap}
+.days{padding:0 8px 12px}
+.day{display:grid;grid-template-columns:44px 36px 1fr 60px 76px;align-items:center;gap:8px;padding:8px;border-radius:12px}
+.day:nth-child(odd){background:rgba(255,255,255,.025)}
+.day .d{font-weight:600}
+.day .d small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.day .i{font-size:24px;text-align:center}
+.day .c{font-size:13px;color:var(--muted);min-width:0}
+.day .c .sun{white-space:nowrap}
+.day .c b{display:block;color:var(--text);font-weight:500;line-height:1.25}
+.day .r{font-size:13px;color:var(--rain);text-align:right}
+.day .r small{display:block;font-size:11px;color:var(--muted)}
+.day .w{font-size:13px;color:var(--wind);text-align:right}
+.day .w small{display:block;font-size:11px;color:var(--muted)}
+.day .hl{text-align:right;font-weight:600;font-size:15px}
+.day .hl span{color:var(--muted);font-weight:400}
+@media (max-width:480px){.day .c .sun{display:none}}
+@media (max-width:380px){.day{grid-template-columns:40px 32px 1fr 56px 64px;gap:6px}.stats{gap:6px}}
+.bar{display:flex;gap:4px;align-items:center}
+.bar i{display:block;height:4px;border-radius:2px;background:var(--rain);opacity:.8}
+.err{margin:16px;padding:14px 16px;border:1px solid #6b2d2d;background:#2a1414;border-radius:12px;color:#ffb3b3;font-size:14px}
+.err code{font-size:12px;word-break:break-all}
+footer{grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:8px 0 16px;line-height:1.6}
+footer a{color:var(--muted)}
+.status{font-size:12px;color:var(--muted);white-space:nowrap}
+.status.stale{color:var(--warn)}
+.skeleton{min-height:420px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Fire Island &amp; Brooklyn<small id="status">Loading…</small></h1>
+  <button id="refresh" type="button" aria-label="Refresh forecast">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+    Refresh
+  </button>
+</header>
+<main id="main">
+  <section class="card skeleton">Loading forecast…</section>
+  <section class="card skeleton">Loading forecast…</section>
+  <footer id="foot"></footer>
+</main>
+<!--WEATHER_DATA-->
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+var main=$('#main'),statusEl=$('#status'),btn=$('#refresh');
+var data=null,ticker=null;
+
+// Condition type -> emoji. Keeps the page self-contained (no icon fetches).
+var ICONS={
+  CLEAR:['☀️','🌙'],MOSTLY_CLEAR:['🌤️','🌙'],PARTLY_CLOUDY:['⛅','☁️'],MOSTLY_CLOUDY:['🌥️','☁️'],CLOUDY:['☁️','☁️'],
+  WINDY:['💨','💨'],WIND_AND_RAIN:['🌧️','🌧️'],
+  LIGHT_RAIN_SHOWERS:['🌦️','🌧️'],CHANCE_OF_SHOWERS:['🌦️','🌧️'],SCATTERED_SHOWERS:['🌦️','🌧️'],RAIN_SHOWERS:['🌧️','🌧️'],HEAVY_RAIN_SHOWERS:['🌧️','🌧️'],
+  LIGHT_TO_MODERATE_RAIN:['🌧️','🌧️'],MODERATE_TO_HEAVY_RAIN:['🌧️','🌧️'],RAIN:['🌧️','🌧️'],LIGHT_RAIN:['🌦️','🌧️'],HEAVY_RAIN:['🌧️','🌧️'],
+  RAIN_PERIODICALLY_HEAVY:['🌧️','🌧️'],
+  LIGHT_SNOW_SHOWERS:['🌨️','🌨️'],CHANCE_OF_SNOW_SHOWERS:['🌨️','🌨️'],SCATTERED_SNOW_SHOWERS:['🌨️','🌨️'],SNOW_SHOWERS:['🌨️','🌨️'],HEAVY_SNOW_SHOWERS:['❄️','❄️'],
+  LIGHT_TO_MODERATE_SNOW:['🌨️','🌨️'],MODERATE_TO_HEAVY_SNOW:['❄️','❄️'],SNOW:['❄️','❄️'],LIGHT_SNOW:['🌨️','🌨️'],HEAVY_SNOW:['❄️','❄️'],
+  SNOWSTORM:['❄️','❄️'],SNOW_PERIODICALLY_HEAVY:['❄️','❄️'],HEAVY_SNOW_STORM:['❄️','❄️'],BLOWING_SNOW:['🌬️','🌬️'],RAIN_AND_SNOW:['🌨️','🌨️'],
+  HAIL:['🌨️','🌨️'],HAIL_SHOWERS:['🌨️','🌨️'],
+  THUNDERSTORM:['⛈️','⛈️'],THUNDERSHOWER:['⛈️','⛈️'],LIGHT_THUNDERSTORM_RAIN:['⛈️','⛈️'],SCATTERED_THUNDERSTORMS:['🌩️','🌩️'],HEAVY_THUNDERSTORM:['⛈️','⛈️'],
+  FOG:['🌫️','🌫️'],HAZE:['🌫️','🌫️']
+};
+function icon(c,day){var m=ICONS[c&&c.type]||['🌡️','🌡️'];return m[day===false?1:0]}
+
+function fmtHour(h){if(h==null)return'';if(h===0)return'12 AM';if(h<12)return h+' AM';if(h===12)return'12 PM';return (h-12)+' PM'}
+function fmtTime(iso,tz){if(!iso)return'';try{return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:tz})}catch(e){return''}}
+function dayLabel(dateStr,i){
+  if(!dateStr)return['',''];
+  var p=dateStr.split('-'),d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
+  var wd=i===0?'Today':d.toLocaleDateString('en-US',{weekday:'short',timeZone:'UTC'});
+  return[wd,d.toLocaleDateString('en-US',{month:'numeric',day:'numeric',timeZone:'UTC'})];
+}
+function n(v,suffix){return v==null?'—':Math.round(v)+(suffix||'')}
+function windStr(w){if(!w||w.speed==null)return'—';return (w.dir?w.dir+' ':'')+Math.round(w.speed)+'<small> mph</small>'}
+function gustStr(w){return w&&w.gust!=null?'gusts '+Math.round(w.gust):''}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function qpf(v){return v==null||v<0.005?'':(v<0.1?v.toFixed(2):v.toFixed(1))+'"'}
+
+function renderLocation(L){
+  if(L.error){return'<section class="card"><div class="top"><div class="loc"><h2>'+esc(L.name)+'</h2><span class="sub">'+esc(L.subtitle)+'</span></div></div><div class="err">Couldn’t load this location.<br><code>'+esc(L.error)+'</code></div></section>'}
+  var c=L.current||{},w=c.wind||{},p=c.precip||{};
+  var h=''
+  +'<section class="card" id="'+esc(L.id)+'">'
+  +'<div class="top"><div class="loc"><h2>'+esc(L.name)+'</h2><span class="sub">'+esc(L.subtitle)+'</span></div>'
+  +'<div class="now"><div class="icon">'+icon(c.condition,c.isDaytime)+'</div>'
+  +'<div><div class="temp">'+n(c.temp)+'<sup>°F</sup></div></div>'
+  +'<div class="desc"><div>'+esc(c.condition&&c.condition.text||'')+'</div>'
+  +'<div class="hl">Feels like '+n(c.feelsLike,'°')+(c.todayHi!=null?' · H '+n(c.todayHi,'°')+' L '+n(c.todayLo,'°'):'')+'</div></div>'
+  +'</div></div>'
+  +'<div class="stats">'
+  +'<div class="stat rain"><div class="k">Rain</div><div class="v">'+n(p.chance,'%')+(qpf(p.qpf)?' <small>'+qpf(p.qpf)+'</small>':'')+'</div></div>'
+  +'<div class="stat wind"><div class="k">Wind</div><div class="v">'+windStr(w)+'</div><div class="k" style="text-transform:none;letter-spacing:0">'+gustStr(w)+'</div></div>'
+  +'<div class="stat"><div class="k">Humidity</div><div class="v">'+n(c.humidity,'%')+'</div>'+(c.uv!=null?'<div class="k" style="text-transform:none;letter-spacing:0">UV '+c.uv+'</div>':'')+'</div>'
+  +'</div>';
+
+  // Hourly
+  h+='<h3>Next 24 hours</h3><div class="hours">';
+  (L.hourly||[]).forEach(function(x,i){
+    var pc=x.precip&&x.precip.chance;
+    h+='<div class="hour"><div class="t">'+(i===0?'Now':fmtHour(x.hour))+'</div><div class="i">'+icon(x.condition,x.isDaytime)+'</div>'
+     +'<div class="tp">'+n(x.temp,'°')+'</div><div class="r">'+(pc!=null&&pc>=10?'💧'+pc+'%':'')+'</div>'
+     +'<div class="w">'+(x.wind&&x.wind.speed!=null?Math.round(x.wind.speed)+' '+(x.wind.dir||''):'')+'</div></div>';
+  });
+  h+='</div>';
+
+  // Daily
+  h+='<h3>7-day forecast</h3><div class="days">';
+  (L.daily||[]).forEach(function(d,i){
+    var lab=dayLabel(d.date,i),pr=d.precip||{},dw=d.wind||{};
+    h+='<div class="day"><div class="d">'+lab[0]+'<small>'+lab[1]+'</small></div><div class="i">'+icon(d.condition,true)+'</div>'
+     +'<div class="c"><b>'+esc(d.condition&&d.condition.text||'')+'</b>'+(d.sunrise?'<span class="sun">☀ '+fmtTime(d.sunrise,L.timeZone)+' – '+fmtTime(d.sunset,L.timeZone)+'</span>':'')+'</div>'
+     +'<div class="r">'+(pr.chance!=null?'💧'+pr.chance+'%':'—')+'<small>'+(qpf(pr.qpf)||'&nbsp;')+'</small></div>'
+     +'<div class="hl">'+n(d.hi,'°')+' <span>'+n(d.lo,'°')+'</span><small style="display:block;font-size:11px;color:var(--wind);font-weight:400">'+(dw.speed!=null?(dw.dir||'')+' '+Math.round(dw.speed)+(dw.gust!=null?'–'+Math.round(dw.gust):'')+' mph':'')+'</small></div>'
+     +'</div>';
+  });
+  h+='</div></section>';
+  return h;
+}
+
+function render(){
+  if(!data){return}
+  var html=(data.locations||[]).map(renderLocation).join('');
+  var s=data.source||{};
+  html+='<footer id="foot">Forecasts from the '+esc(s.provider||'Google Weather API')+', powered by <strong>'+esc(s.model||'Google DeepMind WeatherNext 3')+'</strong>.'
+      +(s.mock?' <strong style="color:var(--warn)">Sample data (mock mode).</strong>':'')
+      +(data.warning?'<br><span style="color:var(--warn)">Last refresh failed: '+esc(data.warning)+'</span>':'')
+      +'<br>For official warnings consult the <a href="https://www.weather.gov/okx/" rel="noopener">National Weather Service</a>.</footer>';
+  main.innerHTML=html;
+  updateStatus();
+}
+
+function updateStatus(){
+  if(!data||!data.fetchedAt){statusEl.textContent='';return}
+  var age=Math.max(0,Date.now()-data.fetchedAt),m=Math.round(age/60000);
+  var t=new Date(data.fetchedAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  statusEl.textContent='Updated '+(m<1?'just now':m+' min ago')+' ('+t+')';
+  statusEl.className=age>20*60000?'stale':'';
+}
+
+function load(force){
+  btn.disabled=true;btn.classList.add('spin');
+  if(!data)statusEl.textContent='Loading…';
+  return fetch('/api/weather'+(force?'?refresh=1':''),{cache:'no-store'})
+    .then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j})})
+    .then(function(j){data=j;render()})
+    .catch(function(e){
+      if(!data){main.innerHTML='<div class="err" style="grid-column:1/-1">Could not load the forecast.<br><code>'+esc(e.message)+'</code></div>'}
+      statusEl.textContent='Refresh failed: '+e.message;statusEl.className='stale';
+    })
+    .then(function(){btn.disabled=false;btn.classList.remove('spin')});
+}
+
+btn.addEventListener('click',function(){load(true)});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)updateStatus()});
+ticker=setInterval(updateStatus,30000);
+
+// First paint: use the snapshot the server inlined, otherwise fetch.
+var inline=document.getElementById('weather-data');
+if(inline){try{data=JSON.parse(inline.textContent);render()}catch(e){data=null}}
+if(!data)load(false);
+})();
+</script>
+</body>
+</html>

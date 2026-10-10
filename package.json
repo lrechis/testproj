@@ -1,0 +1,14 @@
+{
+  "name": "weathernext-dashboard",
+  "version": "1.0.0",
+  "description": "Current weather and forecast for Fire Island and Brooklyn, NY, powered by Google DeepMind WeatherNext 3 via the Google Maps Platform Weather API.",
+  "private": true,
+  "main": "server.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "WEATHER_MOCK=1 node server.js",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
