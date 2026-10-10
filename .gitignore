@@ -1,0 +1,16 @@
+# Gradle
+.gradle/
+build/
+.kotlin/
+# Android Studio / IntelliJ
+.idea/
+*.iml
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+# OS
+.DS_Store
+# Downloaded by the build (see app/build.gradle.kts)
+app/libs/*.aar
+app/libs/*.part

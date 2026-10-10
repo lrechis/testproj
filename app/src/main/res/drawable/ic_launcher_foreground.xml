@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A cat head with sound waves, drawn with simple shapes. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Everything is scaled into the 66dp safe zone of the adaptive icon so no launcher mask
+         clips the ears or the outer sound wave. -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.72"
+        android:scaleY="0.72">
+
+    <!-- ears -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,44 L26,22 L48,34 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M66,44 L72,22 L50,34 Z" />
+
+    <!-- head -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M27,56 A22,22 0 1 1 71,56 A22,22 0 1 1 27,56 Z" />
+
+    <!-- eyes -->
+    <path
+        android:fillColor="#5B3FA0"
+        android:pathData="M38,54 A3.5,3.5 0 1 1 45,54 A3.5,3.5 0 1 1 38,54 Z" />
+    <path
+        android:fillColor="#5B3FA0"
+        android:pathData="M53,54 A3.5,3.5 0 1 1 60,54 A3.5,3.5 0 1 1 53,54 Z" />
+
+    <!-- nose -->
+    <path
+        android:fillColor="#FF7A59"
+        android:pathData="M46,62 L52,62 L49,66 Z" />
+
+    <!-- sound waves -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M78,46 A14,14 0 0 1 78,66"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeWidth="3.5" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M84,40 A22,22 0 0 1 84,72"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeWidth="3.5" />
+    </group>
+</vector>

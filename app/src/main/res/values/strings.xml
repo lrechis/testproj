@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kitten TTS</string>
+    <string name="subtitle">Offline text to speech with KittenTTS, running on this device</string>
+
+    <string name="label_model">Model</string>
+    <string name="label_voice">Voice</string>
+    <string name="label_text">Text</string>
+    <string name="speed_label">Speed: %1$.2f×</string>
+
+    <string name="action_download">Download</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_speak">Speak</string>
+    <string name="action_stop">Stop</string>
+
+    <string name="default_text">Hello! I am Kitten TTS, a tiny text to speech model running completely offline on this phone.</string>
+    <string name="hint_text">Type something to say…</string>
+
+    <string name="model_status_ready">Downloaded and ready</string>
+    <string name="model_status_missing">Not downloaded yet (about %1$d MB). Tap Download, or Speak to download and play.</string>
+    <string name="model_status_downloading">Downloading… %1$s</string>
+    <string name="model_status_downloading_of">Downloading… %1$s of %2$s</string>
+    <string name="model_status_extracting">Unpacking… %1$s</string>
+    <string name="model_status_loading">Loading model…</string>
+    <string name="model_status_deleting">Deleting…</string>
+    <string name="model_status_speaking">Speaking…</string>
+
+    <string name="status_idle">Ready.</string>
+    <string name="status_downloading_model">Downloading the model. Keep the app open until it finishes.</string>
+    <string name="status_loading_model">Loading the model…</string>
+    <string name="status_deleting_model">Deleting the model…</string>
+    <string name="status_generating">Generating speech…</string>
+    <string name="status_stopping">Stopping…</string>
+    <string name="status_done">Done.</string>
+    <string name="status_stopped">Stopped.</string>
+    <string name="status_cancelled">Download cancelled.</string>
+    <string name="status_deleted">Model deleted.</string>
+    <string name="status_downloaded">Model downloaded.</string>
+    <string name="error_prefix">Error: %1$s</string>
+    <string name="error_empty_text">Please enter some text first.</string>
+    <string name="error_busy">Please wait for the current task to finish.</string>
+</resources>
