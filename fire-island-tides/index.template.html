@@ -1,0 +1,850 @@
+<title>Fire Island Beach Drive</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: one column of stacked panels; the day chart is the centerpiece, status pills carry state. */
+  :root {
+    --bg: #f4f0e6;          /* dry sand */
+    --surface: #fffdf7;     /* paper */
+    --surface-2: #ece6d7;   /* wet sand */
+    --fg: #1b272c;          /* slate ink */
+    --muted: #5c6a70;
+    --line: #dcd4c2;
+    --accent: #0e6c86;      /* deep sea teal */
+    --accent-ink: #ffffff;
+    --accent-soft: #d6e8ee;
+    --water: #2f8fab;       /* tide fill */
+    --water-soft: rgba(47, 143, 171, 0.22);
+    --surf: #7a6ba8;        /* wave bars (violet, distinct from tide) */
+    --night: rgba(27, 39, 44, 0.07);
+    --plan: rgba(14, 108, 134, 0.14);
+    --plan-ink: #0e6c86;
+    --ok: #0ca30c; --warn: #fab219; --serious: #ec835a; --crit: #d03b3b; /* fixed status palette */
+    --on-warn: #1b272c; --on-status: #ffffff;
+    --font-display: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+    --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(27, 39, 44, 0.06), 0 6px 18px rgba(27, 39, 44, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1518; --surface: #142024; --surface-2: #1b2a2f; --fg: #eef1ec; --muted: #9eadb0; --line: #27373d;
+      --accent: #5cc2da; --accent-ink: #0d1518; --accent-soft: #163b47; --water: #3aa3c0; --water-soft: rgba(58, 163, 192, 0.25);
+      --surf: #a99ad9; --night: rgba(255, 255, 255, 0.045); --plan: rgba(92, 194, 218, 0.16); --plan-ink: #8fd6e6;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1518; --surface: #142024; --surface-2: #1b2a2f; --fg: #eef1ec; --muted: #9eadb0; --line: #27373d;
+    --accent: #5cc2da; --accent-ink: #0d1518; --accent-soft: #163b47; --water: #3aa3c0; --water-soft: rgba(58, 163, 192, 0.25);
+    --surf: #a99ad9; --night: rgba(255, 255, 255, 0.045); --plan: rgba(92, 194, 218, 0.16); --plan-ink: #8fd6e6;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 15px; line-height: 1.45;
+    padding-block: 0 32px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; }
+  h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; }
+  h1 { font-size: 34px; line-height: 1; text-transform: uppercase; }
+  h2 { font-size: 20px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+  .eyebrow { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .num { font-variant-numeric: tabular-nums; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 18px; padding-block: 18px 4px; }
+  header.top .title { display: grid; gap: 2px; }
+  header.top .title small { color: var(--muted); font-size: 13px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .daynav { display: inline-flex; align-items: stretch; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+  .daynav button { border: 0; background: transparent; padding: 7px 12px; font-family: var(--font-display); font-weight: 600; font-size: 16px; text-transform: uppercase; }
+  .daynav button:hover { background: var(--surface-2); }
+  .daynav input[type="date"] { border: 0; border-left: 1px solid var(--line); border-right: 1px solid var(--line); background: transparent; padding: 6px 10px; min-width: 150px; }
+  select.station { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 7px 10px; max-width: 100%; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; min-width: 0; }
+  .panel > h2 { margin-bottom: 10px; }
+
+  /* Status pills */
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px; line-height: 1.3; color: var(--on-status); white-space: nowrap; }
+  .pill::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; opacity: 0.9; }
+  .pill.easy { background: var(--ok); }
+  .pill.fair { background: var(--warn); color: var(--on-warn); }
+  .pill.hard { background: var(--serious); color: var(--on-warn); }
+  .pill.avoid { background: var(--crit); }
+  .pill.none { background: var(--surface-2); color: var(--muted); }
+  .pill.big { font-size: 22px; padding: 6px 16px 6px 12px; }
+  .pill.big::before { width: 12px; height: 12px; }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; }
+  .hero .now { display: grid; gap: 8px; align-content: start; }
+  .hero .now .headline { font-family: var(--font-display); font-size: 30px; font-weight: 700; line-height: 1.05; text-transform: uppercase; }
+  .hero .now .sub { color: var(--muted); }
+  .stat { display: grid; gap: 4px; align-content: start; padding-left: 16px; border-left: 1px solid var(--line); }
+  .stat .value { font-family: var(--font-display); font-size: 36px; font-weight: 700; line-height: 1; }
+  .stat .value small { font-size: 18px; color: var(--muted); font-weight: 600; margin-left: 2px; }
+  .stat .detail { color: var(--muted); font-size: 14px; }
+  @media (max-width: 720px) {
+    .hero { grid-template-columns: 1fr 1fr; }
+    .hero .now { grid-column: 1 / -1; }
+    .stat:first-of-type { padding-left: 0; border-left: 0; }
+  }
+
+  /* Chart */
+  .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 14px; margin-bottom: 6px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+  .chart-box { position: relative; width: 100%; }
+  .chart-box svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart-box svg text { font-family: var(--font-body); fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .chart-box svg text.strong { fill: var(--fg); font-weight: 600; }
+  .chart-box svg text.lbl { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .chart-box svg .grid { stroke: var(--line); stroke-width: 1; }
+  .chart-box svg .axis { stroke: var(--line); stroke-width: 1; }
+  .chart-box svg .tide-line { fill: none; stroke: var(--water); stroke-width: 2; stroke-linejoin: round; }
+  .chart-box svg .tide-area { fill: var(--water-soft); }
+  .chart-box svg .wave-bar { fill: var(--surf); opacity: 0.85; }
+  .chart-box svg .night { fill: var(--night); }
+  .chart-box svg .now-line { stroke: var(--fg); stroke-width: 1.5; stroke-dasharray: 3 3; }
+  .chart-box svg .plan-band { fill: var(--plan); }
+  .chart-box svg .plan-edge { stroke: var(--plan-ink); stroke-width: 1.5; }
+  .chart-box svg text.plan-lbl { fill: var(--plan-ink); font-weight: 600; }
+  .chart-box svg .extreme { fill: var(--surface); stroke: var(--water); stroke-width: 2; }
+  .chart-box svg .hover-line { stroke: var(--accent); stroke-width: 1; }
+  .chart-box svg .hover-dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+  .tip { position: absolute; pointer-events: none; background: var(--fg); color: var(--bg); padding: 8px 10px; border-radius: 8px; font-size: 13px; line-height: 1.35; min-width: 150px; max-width: 220px; box-shadow: var(--shadow); z-index: 3; }
+  .tip b { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tip[hidden] { display: none; }
+
+  /* Windows + plans */
+  .list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; }
+  .row .time { font-family: var(--font-display); font-weight: 600; font-size: 18px; white-space: nowrap; }
+  .row .desc { color: var(--muted); font-size: 14px; min-width: 0; }
+  .row .desc strong { color: var(--fg); font-weight: 600; }
+  .row.cal { border-left: 4px solid var(--plan-ink); }
+  .row .x { border: 0; background: transparent; color: var(--muted); padding: 2px 6px; border-radius: 6px; font-size: 18px; line-height: 1; }
+  .row .x:hover { background: var(--surface-2); color: var(--fg); }
+  .empty { color: var(--muted); font-size: 14px; padding: 6px 2px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) {
+    .row { grid-template-columns: 1fr auto; row-gap: 4px; }
+    .row .desc { grid-column: 1 / -1; }
+  }
+
+  form.add { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; margin-top: 12px; align-items: end; }
+  form.add label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+  form.add input { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); min-width: 0; width: 100%; }
+  form.add input[type="time"] { width: 112px; }
+  @media (max-width: 560px) { form.add { grid-template-columns: 1fr 1fr; } form.add label:first-child { grid-column: 1 / -1; } form.add input[type="time"] { width: 100%; } }
+  .btn { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); border-radius: 8px; padding: 8px 14px; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 15px; white-space: nowrap; }
+  .btn.ghost { background: transparent; color: var(--accent); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+  .note { font-size: 13px; color: var(--muted); }
+  .note.alert { color: var(--fg); background: var(--surface-2); padding: 8px 10px; border-radius: 8px; }
+
+  /* Surf source */
+  .surf-form { display: grid; grid-template-columns: auto auto 1fr auto; gap: 8px; align-items: end; margin-top: 10px; }
+  .surf-form label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+  .surf-form input { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); width: 100%; min-width: 0; }
+  @media (max-width: 560px) { .surf-form { grid-template-columns: 1fr 1fr; } }
+
+  /* Scale explainer */
+  .scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+  .scale div { border-radius: 8px; padding: 8px 10px; font-size: 13px; color: var(--muted); border: 1px solid var(--line); }
+  .scale div b { display: block; margin-bottom: 4px; }
+  @media (max-width: 560px) { .scale { grid-template-columns: 1fr 1fr; } }
+  footer { color: var(--muted); font-size: 12.5px; display: grid; gap: 6px; padding-top: 4px; }
+  footer a { color: var(--accent); }
+  @media (prefers-reduced-motion: no-preference) { .pill, .row { transition: background-color 160ms ease; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="title">
+      <span class="eyebrow">Ocean beach · Fire Island, NY</span>
+      <h1>Fire Island Beach Drive</h1>
+      <small id="subtitle">Tide and surf for driving the sand</small>
+    </div>
+    <div class="controls">
+      <div class="daynav" role="group" aria-label="Pick a day">
+        <button type="button" id="prevDay" aria-label="Previous day">‹</button>
+        <input type="date" id="dayInput" aria-label="Day">
+        <button type="button" id="nextDay" aria-label="Next day">›</button>
+        <button type="button" id="todayBtn">Today</button>
+      </div>
+      <select class="station" id="stationSel" aria-label="Tide station"></select>
+    </div>
+  </header>
+
+  <section class="panel hero" id="hero" aria-live="polite">
+    <div class="now">
+      <span class="eyebrow" id="nowLabel">Right now</span>
+      <div><span class="pill big none" id="nowPill">Computing</span></div>
+      <div class="headline" id="nowHeadline">Working out the tide…</div>
+      <div class="sub" id="nowSub"></div>
+    </div>
+    <div class="stat">
+      <span class="eyebrow">Tide</span>
+      <div class="value num" id="tideValue">–<small>ft</small></div>
+      <div class="detail" id="tideDetail"></div>
+    </div>
+    <div class="stat">
+      <span class="eyebrow">Surf</span>
+      <div class="value num" id="surfValue">–<small>ft</small></div>
+      <div class="detail" id="surfDetail"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="chart-head">
+      <h2 id="chartTitle">Today</h2>
+      <div class="legend">
+        <span><i style="background: var(--ok)"></i>Easy</span>
+        <span><i style="background: var(--warn)"></i>Doable</span>
+        <span><i style="background: var(--serious)"></i>Tough</span>
+        <span><i style="background: var(--crit)"></i>Avoid</span>
+        <span><i style="background: var(--water)"></i>Tide, ft above MLLW</span>
+        <span><i style="background: var(--surf)"></i>Surf, ft</span>
+        <span><i style="background: var(--plan); border: 1px solid var(--plan-ink)"></i>Your plans</span>
+      </div>
+    </div>
+    <div class="chart-box" id="chartBox">
+      <svg id="chart" role="img" aria-label="Tide height, surf height and drivability through the day"></svg>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <h2>Drive windows</h2>
+      <ul class="list" id="windows"></ul>
+      <p class="note" id="windowsNote"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Your plans</h2>
+      <ul class="list" id="plans"></ul>
+      <p class="empty" id="plansEmpty">No plans on this day yet. Add one below, or pull in your Google Calendar.</p>
+      <form class="add" id="planForm">
+        <label>What<input type="text" id="planTitle" placeholder="Fishing at Democrat Point" maxlength="80" required></label>
+        <label>From<input type="time" id="planStart" required></label>
+        <label>To<input type="time" id="planEnd" required></label>
+        <button class="btn" type="submit" id="planAdd">Add</button>
+      </form>
+      <div class="toolbar">
+        <button class="btn ghost" type="button" id="calBtn">Show Google Calendar</button>
+        <label class="note"><input type="checkbox" id="calAuto"> Load it automatically</label>
+      </div>
+      <p class="note" id="calNote"></p>
+      <p class="note" id="plansNote"></p>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>Surf source</h2>
+    <p class="note" id="surfSource">Loading surf forecast…</p>
+    <form class="surf-form" id="surfForm">
+      <label>Surf height, ft<input type="number" id="surfManualH" min="0" max="30" step="0.5" placeholder="3"></label>
+      <label>Period, s<input type="number" id="surfManualP" min="1" max="30" step="1" placeholder="8"></label>
+      <label>Note<input type="text" id="surfManualNote" maxlength="60" placeholder="NWS surf zone forecast"></label>
+      <button class="btn ghost" type="submit" id="surfManualSave">Set for this day</button>
+    </form>
+    <p class="note" id="surfManualNote2"></p>
+  </section>
+
+  <section class="panel">
+    <h2>How the scale works</h2>
+    <p class="note">Low water and small surf make the firmest, widest driving lane. The score adds a tide step (how far up the beach the water sits, scaled to this station's normal range) to a surf step, and adds one more step when the tide is rising past mid-tide because the lane closes behind you. Night hours are shaded on the chart.</p>
+    <div class="scale">
+      <div><b><span class="pill easy">Easy</span></b>Water near the low mark, surf under 2 ft. Wide packed lane.</div>
+      <div><b><span class="pill fair">Doable</span></b>Mid-tide or 2–3.5 ft surf. Lane narrows, keep moving.</div>
+      <div><b><span class="pill hard">Tough</span></b>Upper half of the tide or 3.5–5 ft surf. Soft sand, washovers at the cuts.</div>
+      <div><b><span class="pill avoid">Avoid</span></b>High water, big surf, or both. Wait for the drop.</div>
+    </div>
+  </section>
+
+  <footer>
+    <div id="attribution"></div>
+    <div>Tides are astronomical predictions (no storm surge, wind or swell setup). Surf is a model forecast for open water about 2 nmi off the beach; breaking waves at the shore differ. Check the park's beach driving status and the NWS surf zone forecast before you go, and treat this page as a planning aid, not a navigation tool.</div>
+    <div>Tide math by <a href="https://github.com/openwatersio/neaps" target="_blank" rel="noopener">Neaps</a> (MIT). Times are shown in Eastern Time.</div>
+  </footer>
+</div>
+
+<script type="application/json" id="stationData">__STATIONS__</script>
+
+<script type="module">
+const STATIONS = JSON.parse(document.getElementById("stationData").textContent);
+const TZ = "America/New_York";
+const $ = (id) => document.getElementById(id);
+const STEP_MIN = 10;
+const CLASSES = ["easy", "fair", "hard", "avoid"];
+const CLASS_LABEL = { easy: "Easy", fair: "Doable", hard: "Tough", avoid: "Avoid", none: "No data" };
+const CLASS_COLOR = { easy: "var(--ok)", fair: "var(--warn)", hard: "var(--serious)", avoid: "var(--crit)", none: "var(--surface-2)" };
+
+// ---------- time helpers (everything is reasoned about in Eastern Time) ----------
+const partsFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+function etParts(d) {
+  const o = {};
+  for (const p of partsFmt.formatToParts(d)) if (p.type !== "literal") o[p.type] = Number(p.value);
+  if (o.hour === 24) o.hour = 0;
+  return o;
+}
+function etDateKey(d) { const p = etParts(d); return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`; }
+function etToUtc(y, m, d, h = 0, mi = 0) {
+  // Find the instant whose Eastern wall-clock is y-m-d h:mi. Two passes handle the DST offset.
+  let guess = Date.UTC(y, m - 1, d, h, mi);
+  for (let i = 0; i < 2; i++) {
+    const p = etParts(new Date(guess));
+    const asUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute);
+    guess += Date.UTC(y, m - 1, d, h, mi) - asUtc;
+  }
+  return new Date(guess);
+}
+function keyToDate(key, h = 0, mi = 0) { const [y, m, d] = key.split("-").map(Number); return etToUtc(y, m, d, h, mi); }
+function shiftKey(key, days) { const [y, m, d] = key.split("-").map(Number); const t = new Date(Date.UTC(y, m - 1, d + days, 12)); return t.toISOString().slice(0, 10); }
+const timeFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
+const hourFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric" });
+const dayFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "long", month: "long", day: "numeric" });
+const shortDayFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" });
+const fmtT = (d) => timeFmt.format(d).replace(" ", " ");
+const fmtFt = (v, digits = 1) => (Math.abs(v) < 0.5 / 10 ** digits ? 0 : v).toFixed(digits);
+const minutesOfDay = (d, dayStart) => (d.getTime() - dayStart.getTime()) / 60000;
+
+// ---------- sunrise / sunset (NOAA-style approximation, good to a couple of minutes) ----------
+function sunTimes(dayStart, lat, lon) {
+  const rad = Math.PI / 180;
+  const noon = new Date(dayStart.getTime() + 12 * 3600e3);
+  const J = noon.getTime() / 86400000 + 2440587.5;
+  const n = Math.round(J - 2451545.0 + 0.0008);
+  const Jstar = n - lon / 360;
+  const M = ((357.5291 + 0.98560028 * Jstar) % 360 + 360) % 360;
+  const C = 1.9148 * Math.sin(M * rad) + 0.02 * Math.sin(2 * M * rad) + 0.0003 * Math.sin(3 * M * rad);
+  const L = (M + C + 180 + 102.9372) % 360;
+  const Jtransit = 2451545.0 + Jstar + 0.0053 * Math.sin(M * rad) - 0.0069 * Math.sin(2 * L * rad);
+  const dec = Math.asin(Math.sin(L * rad) * Math.sin(23.4397 * rad));
+  const cosW = (Math.sin(-0.833 * rad) - Math.sin(lat * rad) * Math.sin(dec)) / (Math.cos(lat * rad) * Math.cos(dec));
+  if (cosW < -1 || cosW > 1) return null;
+  const w = Math.acos(cosW) / rad;
+  const toDate = (j) => new Date((j - 2440587.5) * 86400000);
+  return { sunrise: toDate(Jtransit - w / 360), sunset: toDate(Jtransit + w / 360) };
+}
+
+// ---------- scoring ----------
+function tideStep(level, span) {
+  const p = level / span;
+  return p <= 0.3 ? 0 : p <= 0.55 ? 1 : p <= 0.8 ? 2 : 3;
+}
+function surfStep(ft) {
+  if (ft == null || Number.isNaN(ft)) return null;
+  return ft < 2 ? 0 : ft < 3.5 ? 1 : ft < 5 ? 2 : 3;
+}
+function scorePoint(level, rising, surfFt, span) {
+  const t = tideStep(level, span);
+  const s = surfStep(surfFt);
+  let total = t + (s ?? 0);
+  if (rising && level / span > 0.45) total += 1;
+  const cls = total <= 1 ? "easy" : total === 2 ? "fair" : total <= 4 ? "hard" : "avoid";
+  return { cls, tideStep: t, surfStep: s, total };
+}
+
+// ---------- state ----------
+const state = {
+  dayKey: etDateKey(new Date()),
+  stationIdx: 0,
+  predictor: null,
+  waves: null,          // { hourly: [{t, h, p, d}], generated, source }
+  manualWaves: {},      // dateKey -> { h, p, note }
+  plans: [],            // [{ id, date, start, end, title }]
+  calEvents: {},        // dateKey -> [{ title, start: Date|null, end: Date|null, allDay }]
+  calStatus: {},        // dateKey -> string note
+  db: null, user: null, mcp: null, canWrite: null,
+  hoverIdx: null,
+  model: null,
+};
+try { const s = localStorage.getItem("fibd:station"); if (s != null && STATIONS[+s]) state.stationIdx = +s; } catch {}
+
+// ---------- build the model for the selected day ----------
+function buildModel() {
+  const st = STATIONS[state.stationIdx];
+  const dayStart = keyToDate(state.dayKey, 0, 0);
+  const dayEnd = keyToDate(shiftKey(state.dayKey, 1), 0, 0);
+  // Normal full tide range at this station in feet. A subordinate station carries its
+  // reference station's datums, so scale them by the height ratio it applies.
+  const ratio = st.offsets?.height?.type === "ratio" ? (st.offsets.height.high + st.offsets.height.low) / 2 : 1;
+  const span = (st.datums.MHHW - st.datums.MLLW) * ratio * 3.28084;
+  const N = Math.round((dayEnd - dayStart) / 60000 / STEP_MIN);
+  const points = [];
+  let extremes = [];
+  if (state.predictor) {
+    const tl = state.predictor.getTimelinePrediction({ start: new Date(dayStart.getTime() - STEP_MIN * 60000), end: new Date(dayEnd.getTime() + STEP_MIN * 60000), timeFidelity: STEP_MIN * 60, units: "feet", datum: "MLLW" }).timeline;
+    const ex = state.predictor.getExtremesPrediction({ start: new Date(dayStart.getTime() - 6 * 3600e3), end: new Date(dayEnd.getTime() + 6 * 3600e3), units: "feet", datum: "MLLW" }).extremes;
+    extremes = ex.map((e) => ({ time: e.time, level: e.level, high: e.high }));
+    for (let i = 0; i <= N; i++) {
+      const t = new Date(dayStart.getTime() + i * STEP_MIN * 60000);
+      const pt = tl[i + 1] ?? tl[tl.length - 1];
+      const prev = tl[i] ?? pt, next = tl[i + 2] ?? pt;
+      const rising = next.level > prev.level;
+      const surf = surfAt(t);
+      points.push({ t, level: pt.level, rising, surf: surf?.h ?? null, period: surf?.p ?? null, surfSrc: surf?.src ?? null, ...scorePoint(pt.level, rising, surf?.h ?? null, span) });
+    }
+  }
+  const sun = sunTimes(dayStart, st.latitude, st.longitude);
+  // windows: merge consecutive same-class points
+  const windows = [];
+  for (const p of points) {
+    const last = windows[windows.length - 1];
+    if (last && last.cls === p.cls) { last.end = p.t; last.n++; }
+    else windows.push({ cls: p.cls, start: p.t, end: p.t, n: 1 });
+  }
+  state.model = { st, dayStart, dayEnd, span, points, extremes, sun, windows };
+}
+
+function surfAt(t) {
+  const key = etDateKey(t);
+  const m = state.manualWaves[key];
+  if (m && m.h != null) return { h: m.h, p: m.p ?? null, src: "manual" };
+  const hrs = state.waves?.hourly;
+  if (!hrs || !hrs.length) return null;
+  const ms = t.getTime();
+  // linear interpolation between the two bracketing hours
+  let lo = null, hi = null;
+  for (let i = 0; i < hrs.length; i++) {
+    const ht = Date.parse(hrs[i].t);
+    if (ht <= ms) lo = hrs[i]; else { hi = hrs[i]; break; }
+  }
+  if (!lo || !hi) return null;
+  const a = Date.parse(lo.t), b = Date.parse(hi.t);
+  if (b - a > 2 * 3600e3) return null;
+  const f = (ms - a) / (b - a);
+  if (lo.h == null || hi.h == null) return null;
+  return { h: lo.h + (hi.h - lo.h) * f, p: lo.p != null && hi.p != null ? lo.p + (hi.p - lo.p) * f : lo.p ?? hi.p, src: "forecast" };
+}
+
+// ---------- rendering ----------
+function render() {
+  buildModel();
+  renderHeader();
+  renderHero();
+  renderChart();
+  renderWindows();
+  renderPlans();
+  renderSurfSource();
+}
+
+function renderHeader() {
+  const { st, dayStart } = state.model;
+  $("dayInput").value = state.dayKey;
+  const today = etDateKey(new Date());
+  const rel = state.dayKey === today ? "Today" : state.dayKey === shiftKey(today, 1) ? "Tomorrow" : state.dayKey === shiftKey(today, -1) ? "Yesterday" : "";
+  $("chartTitle").textContent = (rel ? rel + " · " : "") + dayFmt.format(dayStart);
+  $("subtitle").textContent = `Tide station: ${st.name}${st.offsets ? ` (from ${st.offsets.referenceName} harmonics)` : ""}`;
+  $("attribution").textContent = `Tide harmonics: NOAA CO-OPS station ${st.id.replace("noaa/", "")} via the ${st.attribution}.`;
+}
+
+function renderHero() {
+  const m = state.model;
+  const now = new Date();
+  const isToday = state.dayKey === etDateKey(now);
+  const pts = m.points;
+  if (!pts.length) return;
+  let p, label;
+  if (isToday) {
+    const idx = Math.min(pts.length - 1, Math.max(0, Math.round(minutesOfDay(now, m.dayStart) / STEP_MIN)));
+    p = pts[idx]; label = `Right now · ${fmtT(now)}`;
+  } else {
+    // show the best moment of the day
+    p = pts.reduce((best, q) => (q.total < best.total ? q : best), pts[0]);
+    label = `Best of the day · ${fmtT(p.t)}`;
+  }
+  $("nowLabel").textContent = label;
+  const pill = $("nowPill"); pill.className = `pill big ${p.cls}`; pill.textContent = CLASS_LABEL[p.cls];
+  const nextEx = m.extremes.filter((e) => e.time > (isToday ? now : p.t)).slice(0, 2);
+  const nextTxt = nextEx.map((e) => `${e.high ? "high" : "low"} ${fmtT(e.time)} (${fmtFt(e.level)} ft)`).join(", then ");
+  const trend = p.rising ? "rising" : "falling";
+  $("nowHeadline").textContent = p.cls === "easy" ? "Good to go on the sand." : p.cls === "fair" ? "Driveable, watch the lane." : p.cls === "hard" ? "Soft and narrow. Think twice." : "Stay off the beach for now.";
+  const bits = [`Tide ${fmtFt(p.level)} ft and ${trend}`];
+  if (nextTxt) bits.push(`next ${nextTxt}`);
+  if (p.surf != null) bits.push(`surf ${p.surf.toFixed(1)} ft${p.period ? ` at ${Math.round(p.period)} s` : ""}`); else bits.push("no surf forecast loaded, scored on tide alone");
+  $("nowSub").textContent = bits.join(" · ") + ".";
+  $("tideValue").innerHTML = `${fmtFt(p.level)}<small>ft</small>`;
+  const lowNext = m.extremes.find((e) => !e.high && e.time > (isToday ? now : m.dayStart));
+  $("tideDetail").textContent = `${trend[0].toUpperCase() + trend.slice(1)}. ${lowNext ? `Next low ${fmtT(lowNext.time)}.` : ""} Range here ≈ ${m.span.toFixed(1)} ft.`;
+  if (p.surf != null) {
+    $("surfValue").innerHTML = `${p.surf.toFixed(1)}<small>ft</small>`;
+    $("surfDetail").textContent = `${p.period ? `${Math.round(p.period)} s period · ` : ""}${p.surfSrc === "manual" ? "entered by hand" : "model forecast"}`;
+  } else {
+    $("surfValue").innerHTML = `–<small>ft</small>`;
+    $("surfDetail").textContent = "No forecast for this day. Enter one below.";
+  }
+}
+
+function dayPlans() {
+  const key = state.dayKey;
+  const own = state.plans.filter((p) => p.date === key).map((p) => ({ ...p, kind: "plan", startD: keyToDate(key, ...p.start.split(":").map(Number)), endD: keyToDate(key, ...p.end.split(":").map(Number)) }));
+  const cal = (state.calEvents[key] || []).map((e, i) => ({ id: "cal" + i, kind: "cal", title: e.title, allDay: e.allDay, startD: e.start, endD: e.end }));
+  return [...own, ...cal].sort((a, b) => (a.startD?.getTime() ?? 0) - (b.startD?.getTime() ?? 0));
+}
+
+function verdictFor(startD, endD) {
+  const m = state.model;
+  if (!startD || !endD || !m.points.length) return null;
+  const i0 = Math.max(0, Math.floor(minutesOfDay(startD, m.dayStart) / STEP_MIN));
+  const i1 = Math.min(m.points.length - 1, Math.ceil(minutesOfDay(endD, m.dayStart) / STEP_MIN));
+  if (i1 < i0) return null;
+  const slice = m.points.slice(i0, i1 + 1);
+  const worst = slice.reduce((w, p) => (CLASSES.indexOf(p.cls) > CLASSES.indexOf(w.cls) ? p : w), slice[0]);
+  const best = slice.reduce((b, p) => (CLASSES.indexOf(p.cls) < CLASSES.indexOf(b.cls) ? p : b), slice[0]);
+  return { worst, best };
+}
+
+function renderChart() {
+  const m = state.model;
+  const svg = $("chart");
+  const box = $("chartBox");
+  const W = Math.max(320, box.clientWidth || 720);
+  const narrow = W < 520;
+  const padL = 34, padR = 12;
+  const bandH = 14, bandTop = 26;
+  const tideTop = bandTop + bandH + 26, tideH = narrow ? 150 : 190;
+  const waveTop = tideTop + tideH + 46, waveH = narrow ? 56 : 70;
+  const axisY = waveTop + waveH;
+  const H = axisY + 24;
+  const x = (t) => padL + ((t.getTime() - m.dayStart.getTime()) / (m.dayEnd - m.dayStart)) * (W - padL - padR);
+  const pts = m.points;
+  const levels = pts.map((p) => p.level);
+  const yMin = Math.min(-0.5, Math.floor(Math.min(...levels, 0) * 2) / 2);
+  const yMax = Math.max(Math.ceil(Math.max(...levels, m.span) * 2) / 2, yMin + 1);
+  const y = (v) => tideTop + tideH - ((v - yMin) / (yMax - yMin)) * tideH;
+  const surfVals = pts.map((p) => p.surf).filter((v) => v != null);
+  const sMax = Math.max(4, Math.ceil(Math.max(0, ...surfVals)));
+  const ys = (v) => waveTop + waveH - (v / sMax) * waveH;
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let out = "";
+
+  // night shading
+  if (m.sun) {
+    const nightBands = [[m.dayStart, m.sun.sunrise], [m.sun.sunset, m.dayEnd]];
+    for (const [a, b] of nightBands) if (b > a) out += `<rect class="night" x="${x(a)}" y="${bandTop}" width="${x(b) - x(a)}" height="${axisY - bandTop}"/>`;
+    out += `<text x="${x(m.sun.sunrise)}" y="${bandTop - 8}" text-anchor="middle">☀ ${fmtT(m.sun.sunrise)}</text>`;
+    out += `<text x="${x(m.sun.sunset)}" y="${bandTop - 8}" text-anchor="middle">☾ ${fmtT(m.sun.sunset)}</text>`;
+  }
+
+  // hour grid + axis
+  for (let h = 0; h <= 24; h += narrow ? 6 : 3) {
+    const t = new Date(m.dayStart.getTime() + h * 3600e3);
+    const xx = x(t);
+    out += `<line class="grid" x1="${xx}" x2="${xx}" y1="${tideTop}" y2="${axisY}"/>`;
+    const lab = h === 24 ? "12 AM" : hourFmt.format(t);
+    out += `<text x="${xx}" y="${axisY + 16}" text-anchor="${h === 0 ? "start" : h === 24 ? "end" : "middle"}">${lab}</text>`;
+  }
+  // tide y grid
+  for (let v = Math.ceil(yMin); v <= yMax; v += 1) {
+    out += `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}"/>`;
+    out += `<text x="${padL - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+  }
+  out += `<text class="lbl" x="${padL}" y="${tideTop - 8}">Tide · ft above MLLW</text>`;
+  out += `<text class="lbl" x="${padL}" y="${waveTop - 8}">Surf · ft</text>`;
+  for (const v of [0, sMax]) out += `<text x="${padL - 6}" y="${ys(v) + 4}" text-anchor="end">${v}</text>`;
+  out += `<line class="axis" x1="${padL}" x2="${W - padR}" y1="${ys(0)}" y2="${ys(0)}"/>`;
+
+  // drivability band
+  out += `<text class="lbl" x="${padL}" y="${bandTop - 8}" style="display:${m.sun ? "none" : "block"}">Drive score</text>`;
+  for (const w of m.windows) {
+    const x0 = x(w.start), x1 = x(new Date(w.end.getTime() + STEP_MIN * 60000));
+    out += `<rect x="${x0}" y="${bandTop}" width="${Math.max(0, Math.min(x1, W - padR) - x0)}" height="${bandH}" fill="${CLASS_COLOR[w.cls]}" rx="2"/>`;
+  }
+
+  // plans
+  for (const pl of dayPlans()) {
+    if (!pl.startD || !pl.endD || pl.allDay) continue;
+    const x0 = Math.max(padL, x(pl.startD)), x1 = Math.min(W - padR, x(pl.endD));
+    if (x1 <= x0) continue;
+    out += `<rect class="plan-band" x="${x0}" y="${bandTop + bandH + 4}" width="${x1 - x0}" height="${axisY - bandTop - bandH - 4}"/>`;
+    out += `<line class="plan-edge" x1="${x0}" x2="${x0}" y1="${bandTop + bandH + 4}" y2="${axisY}"/>`;
+    out += `<text class="plan-lbl" x="${x0 + 4}" y="${bandTop + bandH + 16}">${esc(pl.title.length > 22 && narrow ? pl.title.slice(0, 20) + "…" : pl.title)}</text>`;
+  }
+
+  // tide area + line
+  if (pts.length) {
+    const path = pts.map((p, i) => `${i ? "L" : "M"}${x(p.t).toFixed(1)},${y(p.level).toFixed(1)}`).join("");
+    out += `<path class="tide-area" d="${path}L${x(pts[pts.length - 1].t).toFixed(1)},${y(yMin)}L${x(pts[0].t).toFixed(1)},${y(yMin)}Z"/>`;
+    out += `<path class="tide-line" d="${path}"/>`;
+  }
+  // extremes
+  for (const e of m.extremes) {
+    if (e.time < m.dayStart || e.time >= m.dayEnd) continue;
+    const xx = x(e.time), yy = y(e.level);
+    out += `<circle class="extreme" cx="${xx}" cy="${yy}" r="4"/>`;
+    const anchor = xx < padL + 40 ? "start" : xx > W - padR - 40 ? "end" : "middle";
+    out += `<text class="strong" x="${xx}" y="${e.high ? yy - 10 : yy + 18}" text-anchor="${anchor}">${narrow ? "" : (e.high ? "High " : "Low ")}${fmtT(e.time)} · ${fmtFt(e.level)} ft</text>`;
+  }
+  // surf bars (hourly)
+  for (let i = 0; i < pts.length; i += 6) {
+    const p = pts[i];
+    if (p.surf == null) continue;
+    const bw = (x(new Date(p.t.getTime() + 3600e3)) - x(p.t)) - 2;
+    out += `<rect class="wave-bar" x="${x(p.t) + 1}" y="${ys(p.surf)}" width="${Math.max(1, bw)}" height="${ys(0) - ys(p.surf)}" rx="2"/>`;
+  }
+  if (!surfVals.length) out += `<text x="${(padL + W - padR) / 2}" y="${waveTop + waveH / 2 + 4}" text-anchor="middle">No surf forecast for this day</text>`;
+
+  // now line
+  const now = new Date();
+  if (now >= m.dayStart && now < m.dayEnd) {
+    const xx = x(now);
+    out += `<line class="now-line" x1="${xx}" x2="${xx}" y1="${bandTop - 2}" y2="${axisY}"/>`;
+    out += `<text class="strong" x="${xx}" y="${axisY + 16}" text-anchor="middle" style="paint-order:stroke; stroke: var(--surface); stroke-width: 4px;">now</text>`;
+  }
+  // hover
+  if (state.hoverIdx != null && pts[state.hoverIdx]) {
+    const p = pts[state.hoverIdx];
+    out += `<line class="hover-line" x1="${x(p.t)}" x2="${x(p.t)}" y1="${bandTop}" y2="${axisY}"/>`;
+    out += `<circle class="hover-dot" cx="${x(p.t)}" cy="${y(p.level)}" r="5"/>`;
+  }
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  svg.innerHTML = out;
+  svg.dataset.padl = padL; svg.dataset.padr = padR;
+}
+
+function renderWindows() {
+  const m = state.model;
+  const ul = $("windows");
+  const good = m.windows.filter((w) => (w.cls === "easy" || w.cls === "fair") && w.n >= 3);
+  ul.innerHTML = good.length ? good.map((w) => {
+    const end = new Date(w.end.getTime() + STEP_MIN * 60000);
+    const mid = m.points[Math.round((minutesOfDay(w.start, m.dayStart) + minutesOfDay(end, m.dayStart)) / 2 / STEP_MIN)] || m.points[0];
+    const dur = Math.round((end - w.start) / 60000);
+    const hrs = Math.floor(dur / 60), mins = dur % 60;
+    const night = m.sun && (end <= m.sun.sunrise || w.start >= m.sun.sunset);
+    return `<li class="row"><span class="time num">${fmtT(w.start)} – ${fmtT(end)}</span><span class="desc"><strong>${hrs ? hrs + " h " : ""}${mins ? mins + " min" : ""}</strong> · tide ${fmtFt(mid.level)} ft${mid.surf != null ? ` · surf ${mid.surf.toFixed(1)} ft` : ""}${night ? " · after dark" : ""}</span><span class="pill ${w.cls}">${CLASS_LABEL[w.cls]}</span></li>`;
+  }).join("") : `<li class="empty">No easy or doable windows on this day with the current tide and surf.</li>`;
+  const lows = m.extremes.filter((e) => !e.high && e.time >= m.dayStart && e.time < m.dayEnd);
+  $("windowsNote").textContent = lows.length ? `Low water at ${lows.map((e) => fmtT(e.time)).join(" and ")}. The firmest sand is usually from about two hours before low to two hours after.` : "";
+}
+
+function renderPlans() {
+  const items = dayPlans();
+  const ul = $("plans");
+  $("plansEmpty").hidden = items.length > 0;
+  ul.innerHTML = items.map((pl) => {
+    const v = pl.allDay ? null : verdictFor(pl.startD, pl.endD);
+    const time = pl.allDay ? "All day" : `${fmtT(pl.startD)} – ${fmtT(pl.endD)}`;
+    let desc = pl.kind === "cal" ? "Google Calendar" : "";
+    if (v) {
+      desc = v.worst.cls === v.best.cls ? `<strong>${CLASS_LABEL[v.worst.cls]}</strong> the whole time` : `Ranges from <strong>${CLASS_LABEL[v.best.cls]}</strong> (${fmtT(v.best.t)}) to <strong>${CLASS_LABEL[v.worst.cls]}</strong> (${fmtT(v.worst.t)})`;
+      if (pl.kind === "cal") desc += " · from Google Calendar";
+    }
+    const pill = v ? `<span class="pill ${v.worst.cls}">${CLASS_LABEL[v.worst.cls]}</span>` : `<span class="pill none">–</span>`;
+    const del = pl.kind === "plan" && state.canWrite !== false ? `<button class="x" type="button" data-del="${pl.id}" aria-label="Remove plan">×</button>` : "";
+    const title = String(pl.title || "(untitled)").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    return `<li class="row${pl.kind === "cal" ? " cal" : ""}"><span class="time num">${time}</span><span class="desc"><strong>${title}</strong><br>${desc}</span><span style="display:flex;gap:6px;align-items:center">${pill}${del}</span></li>`;
+  }).join("");
+  $("calNote").textContent = state.calStatus[state.dayKey] || "";
+}
+
+function renderSurfSource() {
+  const w = state.waves;
+  const key = state.dayKey;
+  const man = state.manualWaves[key];
+  let txt;
+  if (w && w.hourly?.length) {
+    const first = new Date(Date.parse(w.hourly[0].t)), last = new Date(Date.parse(w.hourly[w.hourly.length - 1].t));
+    const gen = w.generated ? new Date(w.generated) : null;
+    const covers = keyToDate(key) >= first && keyToDate(key) <= last;
+    txt = `${w.source || "Model forecast"}${gen ? `, fetched ${shortDayFmt.format(gen)} ${fmtT(gen)}` : ""}. Covers ${shortDayFmt.format(first)} to ${shortDayFmt.format(last)}.${covers ? "" : " This day is outside the forecast."}`;
+  } else txt = "No surf forecast file is loaded yet. Scores use the tide alone until one is published, or enter the day's surf below.";
+  if (man) txt += ` Manual entry for this day: ${man.h} ft${man.p ? ` at ${man.p} s` : ""}${man.note ? ` (${man.note})` : ""}, which overrides the forecast.`;
+  $("surfSource").textContent = txt;
+  $("surfManualH").value = man?.h ?? ""; $("surfManualP").value = man?.p ?? ""; $("surfManualNote").value = man?.note ?? "";
+  $("surfManualSave").textContent = man ? "Update this day" : "Set for this day";
+  $("surfManualNote2").textContent = state.db ? (man ? "Clear the height and save to go back to the forecast." : "Saved entries sync to every device that opens this page.") : "Manual entries need the shared store, which this view can't reach. Scores use the forecast only.";
+}
+
+// ---------- hover / touch ----------
+function handlePointer(ev) {
+  const m = state.model; if (!m?.points.length) return;
+  const svg = $("chart");
+  const rect = svg.getBoundingClientRect();
+  const padL = +svg.dataset.padl, padR = +svg.dataset.padr;
+  const W = rect.width;
+  const f = (ev.clientX - rect.left - padL) / (W - padL - padR);
+  if (f < 0 || f > 1) { clearHover(); return; }
+  const idx = Math.round(f * (m.points.length - 1));
+  if (idx === state.hoverIdx) return;
+  state.hoverIdx = idx;
+  renderChart();
+  const p = m.points[idx];
+  const tip = $("tip");
+  tip.innerHTML = `<b>${fmtT(p.t)} · ${CLASS_LABEL[p.cls]}</b><br>Tide ${fmtFt(p.level, 2)} ft, ${p.rising ? "rising" : "falling"}<br>${p.surf != null ? `Surf ${p.surf.toFixed(1)} ft${p.period ? ` at ${Math.round(p.period)} s` : ""}` : "No surf data"}`;
+  tip.hidden = false;
+  const left = ev.clientX - rect.left;
+  tip.style.left = `${Math.min(Math.max(0, left + 14), W - 170)}px`;
+  tip.style.top = `${Math.max(0, ev.clientY - rect.top - 10)}px`;
+}
+function clearHover() { if (state.hoverIdx == null) return; state.hoverIdx = null; $("tip").hidden = true; renderChart(); }
+$("chart").addEventListener("pointermove", handlePointer);
+$("chart").addEventListener("pointerdown", handlePointer);
+$("chart").addEventListener("pointerleave", clearHover);
+
+// ---------- controls ----------
+function setDay(key) { state.dayKey = key; state.hoverIdx = null; render(); maybeLoadCalendar(); }
+$("prevDay").addEventListener("click", () => setDay(shiftKey(state.dayKey, -1)));
+$("nextDay").addEventListener("click", () => setDay(shiftKey(state.dayKey, 1)));
+$("todayBtn").addEventListener("click", () => setDay(etDateKey(new Date())));
+$("dayInput").addEventListener("change", (e) => { if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) setDay(e.target.value); });
+const sel = $("stationSel");
+STATIONS.forEach((s, i) => { const o = document.createElement("option"); o.value = i; o.textContent = s.label; sel.appendChild(o); });
+sel.value = state.stationIdx;
+sel.addEventListener("change", async () => { state.stationIdx = +sel.value; try { localStorage.setItem("fibd:station", sel.value); } catch {} await makePredictor(); render(); });
+let resizeT; new ResizeObserver(() => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (state.model) renderChart(); }, 60); }).observe($("chartBox"));
+setInterval(() => { if (state.model && state.dayKey === etDateKey(new Date())) render(); }, 60000);
+
+// ---------- tide engine ----------
+let tideLib = null;
+async function makePredictor() {
+  if (!tideLib) {
+    try { tideLib = await import("https://cdn.jsdelivr.net/npm/@neaps/tide-predictor@0.11.0/dist/index.js"); }
+    catch (e) {
+      $("nowHeadline").textContent = "Couldn't load the tide engine.";
+      $("nowSub").textContent = "The page needs cdn.jsdelivr.net for the harmonic tide calculator. Check the connection and reload.";
+      return;
+    }
+  }
+  state.predictor = tideLib.useStation(STATIONS[state.stationIdx]);
+}
+
+// ---------- surf file ----------
+async function loadWaves() {
+  try {
+    const r = await fetch("waves.json", { cache: "no-store" });
+    if (r.ok) { const j = await r.json(); if (j && Array.isArray(j.hourly)) state.waves = j; }
+  } catch {}
+}
+
+// ---------- capabilities: db (plans, manual surf), user, mcp (Google Calendar) ----------
+async function initCapabilities() {
+  if (!window.claude?.use) { $("plansNote").textContent = "Plans you add here stay on this page only while it's open; the shared store isn't available in this view."; return; }
+  const [db, user, mcp] = await Promise.all([claude.use("db"), claude.use("user"), claude.use("mcp")]);
+  state.db = db; state.user = user; state.mcp = mcp;
+  if (user) { try { state.canWrite = await user.can("data.write"); } catch { state.canWrite = null; } }
+  if (db) {
+    db.collection("plans").onSnapshot((snap) => {
+      state.plans = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => p.date && p.start && p.end);
+      if (state.model) { renderChart(); renderPlans(); }
+    }, (e) => { $("plansNote").textContent = `Plans can't be loaded right now (${e.code}).`; });
+    db.collection("surf_manual").onSnapshot((snap) => {
+      const mw = {};
+      for (const d of snap.docs) { const v = d.data(); if (v && v.h != null) mw[d.id] = v; }
+      state.manualWaves = mw;
+      if (state.model) render();
+    }, () => {});
+    if (state.canWrite === false) { $("planForm").hidden = true; $("surfForm").hidden = true; $("plansNote").textContent = "You can view plans here but not change them."; }
+  } else {
+    $("planForm").hidden = true; $("surfForm").hidden = true;
+    $("plansNote").textContent = "Sign in to add plans; the shared store isn't available in this view.";
+  }
+  if (!mcp) { $("calBtn").disabled = true; $("calAuto").disabled = true; $("calNote").textContent = "Google Calendar isn't reachable from this view."; }
+  else { try { $("calAuto").checked = localStorage.getItem("fibd:calAuto") === "1"; } catch {} maybeLoadCalendar(); }
+}
+
+$("planForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!state.db) return;
+  const title = $("planTitle").value.trim(), start = $("planStart").value, end = $("planEnd").value;
+  if (!title || !start || !end) return;
+  $("planAdd").disabled = true;
+  try {
+    await state.db.collection("plans").add({ date: state.dayKey, start, end, title, createdAt: new Date().toISOString() });
+    $("planTitle").value = ""; $("planStart").value = ""; $("planEnd").value = "";
+    $("plansNote").textContent = "";
+  } catch (err) {
+    $("plansNote").textContent = err?.code === "invalid_argument" ? "This view can't write plans." : `Couldn't save the plan (${err?.code || "error"}). Try again.`;
+    if (err?.code === "invalid_argument") state.canWrite = false;
+  } finally { $("planAdd").disabled = false; }
+});
+$("plans").addEventListener("click", async (e) => {
+  const id = e.target?.dataset?.del; if (!id || !state.db) return;
+  try { await state.db.collection("plans").doc(id).delete(); } catch (err) { $("plansNote").textContent = `Couldn't remove it (${err?.code || "error"}).`; }
+});
+$("surfForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!state.db) return;
+  const h = $("surfManualH").value === "" ? null : Number($("surfManualH").value);
+  const p = $("surfManualP").value === "" ? null : Number($("surfManualP").value);
+  const note = $("surfManualNote").value.trim();
+  const ref = state.db.collection("surf_manual").doc(state.dayKey);
+  $("surfManualSave").disabled = true;
+  try {
+    if (h == null) await ref.delete(); else await ref.set({ h, p, note, savedAt: new Date().toISOString() });
+    $("surfManualNote2").textContent = h == null ? "Manual entry cleared." : "Saved.";
+  } catch (err) { $("surfManualNote2").textContent = `Couldn't save (${err?.code || "error"}).`; }
+  finally { $("surfManualSave").disabled = false; }
+});
+
+// Google Calendar via the viewer's own connector
+function parseCalendarPayload(payload) {
+  let arr = Array.isArray(payload) ? payload : payload?.events ?? payload?.items ?? payload?.data?.events ?? payload?.result?.events ?? [];
+  if (typeof payload === "string") { try { const j = JSON.parse(payload); return parseCalendarPayload(j); } catch { return []; } }
+  if (!Array.isArray(arr)) arr = [];
+  return arr.map((ev) => {
+    const s = ev.start ?? ev.startTime ?? ev.start_time, e = ev.end ?? ev.endTime ?? ev.end_time;
+    const sv = typeof s === "object" ? (s?.dateTime ?? s?.date_time ?? s?.date) : s;
+    const ev2 = typeof e === "object" ? (e?.dateTime ?? e?.date_time ?? e?.date) : e;
+    const allDay = typeof sv === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sv);
+    const parse = (v) => { if (!v || allDay) return null; const t = Date.parse(v); return Number.isNaN(t) ? null : new Date(t); };
+    return { title: ev.summary ?? ev.title ?? ev.name ?? "(no title)", allDay, start: parse(sv), end: parse(ev2), dateKey: allDay ? sv : null };
+  });
+}
+async function loadCalendar(force = false) {
+  const key = state.dayKey;
+  if (!state.mcp) return;
+  if (!force && state.calEvents[key]) return;
+  state.calStatus[key] = "Loading calendar…"; renderPlans();
+  const input = { startTime: `${key}T00:00:00`, endTime: `${shiftKey(key, 1)}T00:00:00`, orderBy: "startTime", pageSize: 50, timeZone: TZ };
+  try {
+    const res = await state.mcp.callTool("Google Calendar", "list_events", input, { cache: { staleTime: 5 * 60e3, gcTime: 60 * 60e3, refresh: force } });
+    const evs = parseCalendarPayload(res.payload).filter((e) => e.allDay ? e.dateKey === key : e.start && e.end && e.end > keyToDate(key) && e.start < keyToDate(shiftKey(key, 1)));
+    state.calEvents[key] = evs;
+    const when = res.cache?.storedAt ? ` (as of ${fmtT(new Date(res.cache.storedAt))})` : "";
+    state.calStatus[key] = evs.length ? `${evs.length} calendar event${evs.length > 1 ? "s" : ""} shown${when}.` : `Nothing on your calendar this day${when}.`;
+  } catch (err) {
+    const c = err?.code;
+    state.calStatus[key] =
+      c === "server_not_connected" ? "Add Google Calendar in claude.ai Settings → Connectors, then try again." :
+      c === "needs_reauth" ? "Reconnect Google Calendar in claude.ai Settings → Connectors." :
+      c === "not_in_manifest" || c === "approval_required" || c === "consent_required" ? "Calendar access wasn't allowed for this page. Press the button to try again." :
+      c === "selection_required" ? "Choose which Google Calendar connector this page should use when claude.ai asks." :
+      c === "tool_error" ? `Google Calendar reported a problem: ${String(err.message || "").slice(0, 140)}` :
+      `Calendar didn't load (${c || "error"}).`;
+  }
+  renderChart(); renderPlans();
+}
+function maybeLoadCalendar() { if (state.mcp && $("calAuto").checked) loadCalendar(); }
+$("calBtn").addEventListener("click", () => loadCalendar(true));
+$("calAuto").addEventListener("change", (e) => { try { localStorage.setItem("fibd:calAuto", e.target.checked ? "1" : "0"); } catch {} if (e.target.checked) loadCalendar(); });
+
+// ---------- boot ----------
+$("dayInput").value = state.dayKey;
+(async () => {
+  await Promise.all([makePredictor(), loadWaves()]);
+  render();
+  initCapabilities();
+})();
+</script>
